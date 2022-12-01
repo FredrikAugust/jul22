@@ -1,6 +1,6 @@
 # julekalender
 
-- bruker github workspaces
+- bruker github codespaces
   - oppsett:
     - installer rust med rustup: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
     - hver dag: `cargo new day1/2/3/...`
