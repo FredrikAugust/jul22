@@ -1,5 +1,3 @@
-use std::fmt;
-
 #[derive(Debug)]
 struct Directory {
     name: String,
@@ -9,7 +7,7 @@ struct Directory {
 }
 
 impl Directory {
-    fn update_from_operations(self: &mut Self, operations: Vec<Operation>) -> Vec<Operation> {
+    fn update_from_operations(&mut self, operations: Vec<Operation>) -> Vec<Operation> {
         let Some(head) = operations.first() else {
             return vec![];
         };
@@ -29,7 +27,7 @@ impl Directory {
                 let remaining_operations =
                     sub_directory.update_from_operations(operations[1..].to_vec());
 
-                return self.update_from_operations(remaining_operations);
+                self.update_from_operations(remaining_operations)
             }
             Operation::Ls(children) => {
                 for child in children {
@@ -48,7 +46,7 @@ impl Directory {
                     }
                 }
 
-                return self.update_from_operations(operations[1..].to_vec());
+                self.update_from_operations(operations[1..].to_vec())
             }
         }
     }
@@ -99,7 +97,7 @@ enum Child {
 
 impl Child {
     fn from_str(str: &str) -> Child {
-        let (head, tail) = str.split_once(" ").unwrap();
+        let (head, tail) = str.split_once(' ').unwrap();
 
         match head {
             "dir" => Child::Directory(tail.to_string()),
