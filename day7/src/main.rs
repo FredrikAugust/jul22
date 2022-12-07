@@ -1,61 +1,120 @@
+use std::fmt;
+
+#[derive(Debug)]
+struct Directory {
+    name: String,
+    files: Vec<(String, i32)>,
+
+    sub_directories: Vec<Directory>,
+}
+
+impl Directory {
+    fn update_from_operations(self: &mut Self, operations: Vec<Operation>) -> Vec<Operation> {
+        let Some(head) = operations.first() else {
+            return vec![];
+        };
+
+        match head {
+            Operation::Cd(path) => {
+                if path == ".." {
+                    return operations[1..].to_vec();
+                }
+
+                let sub_directory = self
+                    .sub_directories
+                    .iter_mut()
+                    .find(|dir| &dir.name == path)
+                    .unwrap();
+
+                let remaining_operations =
+                    sub_directory.update_from_operations(operations[1..].to_vec());
+
+                return self.update_from_operations(remaining_operations);
+            }
+            Operation::Ls(children) => {
+                for child in children {
+                    match child {
+                        Child::Directory(name) => {
+                            let sub_dir = Directory {
+                                name: name.clone(),
+                                files: Vec::new(),
+                                sub_directories: Vec::new(),
+                            };
+                            self.sub_directories.push(sub_dir);
+                        }
+                        Child::File(name, size) => {
+                            self.files.push((name.clone(), *size));
+                        }
+                    }
+                }
+
+                return self.update_from_operations(operations[1..].to_vec());
+            }
+        }
+    }
+
+    fn size(&self) -> i32 {
+        self.files.iter().map(|(_, size)| size).sum::<i32>()
+            + self
+                .sub_directories
+                .iter()
+                .map(|dir| dir.size())
+                .sum::<i32>()
+    }
+
+    fn size_of_directories_under_or_eq_size(&self, max_size: i32) -> i32 {
+        let mut total = 0;
+
+        if self.size() <= max_size {
+            total += self.size();
+        }
+
+        for sub_dir in &self.sub_directories {
+            total += sub_dir.size_of_directories_under_or_eq_size(max_size);
+        }
+
+        total
+    }
+
+    fn directories_larger_or_eq_than(&self, size: i32) -> Vec<i32> {
+        let mut candidates: Vec<i32> = vec![];
+
+        if self.size() >= size {
+            candidates.push(self.size());
+        }
+
+        for sub_dir in &self.sub_directories {
+            candidates.extend(sub_dir.directories_larger_or_eq_than(size));
+        }
+
+        candidates
+    }
+}
+
 #[derive(Debug, Clone)]
-enum Node {
-    Directory(String, Vec<Node>),
-    File(String, u64),
+enum Child {
+    Directory(String),
+    File(String, i32),
+}
+
+impl Child {
+    fn from_str(str: &str) -> Child {
+        let (head, tail) = str.split_once(" ").unwrap();
+
+        match head {
+            "dir" => Child::Directory(tail.to_string()),
+            _ => Child::File(tail.to_string(), head.parse().unwrap()),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
 enum Operation {
     Cd(String),
-    Ls(Vec<Node>),
+    Ls(Vec<Child>),
 }
 
-impl Node {
-    fn from_str(line: &str) -> Self {
-        let (head, tail) = line.split_once(" ").unwrap();
-
-        match head {
-            "dir" => Node::Directory(tail.to_string(), vec![]),
-            _ => Node::File(tail.to_string(), head.parse().unwrap()),
-        }
-    }
-
-    fn update(self: &mut Self, operations: Vec<Operation>) {
-        let Some(head )= operations.first() else {
-            return;
-        };
-
-        match head {
-            Operation::Cd(dir) => match self {
-                Node::Directory(_, children) => {
-                    if dir == ".." {
-                        return;
-                    }
-
-                    let child = children
-                        .iter_mut()
-                        .find(|child| match child {
-                            Node::Directory(name, _) => name == dir,
-                            _ => false,
-                        })
-                        .unwrap();
-
-                    child.update(operations[1..].to_vec());
-                }
-                _ => panic!("Cannot update file"),
-            },
-            Operation::Ls(nodes) => match self {
-                Node::Directory(_, children) => {
-                    children.extend(nodes.clone());
-                    self.update(operations[1..].to_vec());
-                }
-                _ => panic!("Cannot update file"),
-            },
-        }
-    }
-}
-
-pub fn part1(input_string: &str) -> i32 {
+fn setup(input_string: &str) -> Directory {
     let input_parts = input_string
         .split("$ ")
         .filter(|s| !s.is_empty())
@@ -67,22 +126,36 @@ pub fn part1(input_string: &str) -> i32 {
             if head.starts_with("cd") {
                 Operation::Cd(head[3..].to_string())
             } else {
-                Operation::Ls(lines[1..].iter().map(|str| Node::from_str(str)).collect())
+                Operation::Ls(lines[1..].iter().map(|str| Child::from_str(str)).collect())
             }
         })
         .collect::<Vec<_>>();
 
-    let mut tree = Node::Directory("/".to_owned(), vec![]);
+    let mut tree = Directory {
+        name: String::from("/"),
+        files: Vec::new(),
+        sub_directories: Vec::new(),
+    };
 
-    tree.update(input_parts);
+    tree.update_from_operations(input_parts);
 
-    println!("{:#?}", tree);
+    tree
+}
 
-    0
+pub fn part1(input_string: &str) -> i32 {
+    let dir = setup(input_string);
+
+    dir.size_of_directories_under_or_eq_size(100_000)
 }
 
 pub fn part2(input_string: &str) -> i32 {
-    0
+    let dir = setup(input_string);
+
+    let mut candidates = dir.directories_larger_or_eq_than(30000000 - (70000000 - dir.size()));
+
+    candidates.sort();
+
+    *candidates.first().unwrap()
 }
 
 fn main() {
@@ -123,11 +196,11 @@ $ ls
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(TEST_INPUT), 0);
+        assert_eq!(part1(TEST_INPUT), 95437);
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(TEST_INPUT), 0);
+        assert_eq!(part2(TEST_INPUT), 24933642);
     }
 }
