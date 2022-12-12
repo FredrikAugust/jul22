@@ -1,0 +1,56 @@
+Monkey {
+  items: vec![74, 64, 74, 63, 53],
+  operation: |old| old * 7,
+  test: |x| x % 5 == 0,
+    true_target: 1,
+false_target: 6
+},
+Monkey {
+items: vec![69, 99, 95, 62],
+  operation: |old| old * old,
+  test: |x| x % 17 == 0,
+    true_target: 2,
+false_target: 5
+},
+Monkey {
+items: vec![59, 81],
+  operation: |old| old + 8,
+  test: |x|x%7==0,
+    true_target: 4,
+false_target: 3
+},
+Monkey {
+items: vec![50, 67, 63, 57, 63, 83, 97],
+  operation: |old| old + 4,
+  test: |x|x%13==0,
+    true_target: 0,
+false_target: 7
+},
+Monkey {
+items: vec![61, 94, 85, 52, 81, 90, 94, 70],
+  operation: |old| old + 3,
+  test: |x|x%19==0,
+    true_target: 7,
+false_target: 3
+},
+Monkey {
+items: vec![69],
+  operation: |old| old + 5,
+  test: |x|x%3==0,
+    true_target: 4,
+false_target: 2
+},
+Monkey {
+items: vec![54, 55, 58],
+  operation: |old| old + 7,
+  test: |x|x%11==0,
+    true_target: 1,
+false_target: 5
+},
+Monkey {
+items: vec![79, 51, 83, 88, 93, 76],
+  operation: |old| old * 3,
+  test: |x|x%2==0,
+    true_target: 0,
+false_target: 6
+    },
