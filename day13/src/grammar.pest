@@ -2,5 +2,4 @@ list = { "[" ~ ((list | number) ~ ",")* ~ (list | number)? ~ "]" }
 
 number = { ASCII_DIGIT+ }
 
-group = { list ~ "\n" ~ list ~ "\n"? }
-input = { SOI ~ (group ~ "\n")+ ~ group ~ EOI }
+input = { SOI ~ (list ~ "\n")+ ~ list ~ EOI }
