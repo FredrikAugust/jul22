@@ -52,6 +52,7 @@ fn valid_steps(
     position: &Position,
     settled: &HashSet<Position>,
     walls: &HashSet<Position>,
+    floor_height: i32,
 ) -> Option<Position> {
     let prioritised_step_deltas: Vec<Position> = vec![(0, 1), (-1, 1), (1, 1)];
 
@@ -60,16 +61,25 @@ fn valid_steps(
         .map(|(delta_x, delta_y)| (position.0 + delta_x, position.1 + delta_y));
 
     updated_proposed_positions.find(|proposed_position| {
-        walls.contains(proposed_position) == false && settled.contains(proposed_position) == false
+        walls.contains(proposed_position) == false
+            && settled.contains(proposed_position) == false
+            && proposed_position.1 != floor_height
     })
 }
 
-fn print(settled: &HashSet<Position>, walls: &HashSet<Position>, position: &Position) {
-    for y in 0..10 {
-        for x in 493..504 {
+fn print(
+    settled: &HashSet<Position>,
+    walls: &HashSet<Position>,
+    position: &Position,
+    floor_height: i32,
+) {
+    for y in -1..15 {
+        for x in 483..514 {
             let pos = &(x, y);
 
-            if settled.contains(pos) {
+            if y == floor_height {
+                print!("=");
+            } else if settled.contains(pos) {
                 print!("o");
             } else if walls.contains(pos) {
                 print!("#");
@@ -87,54 +97,49 @@ fn dfs(
     position: &Position,
     walls: &HashSet<Position>,
     settled: &mut HashSet<Position>,
-    void_start_y_pos: i32,
+    floor_start_y_pos: i32,
 ) -> bool {
-    if position.1 == void_start_y_pos {
-        return true;
-    }
-
-    print(&settled, &walls, &position);
-
-    while let Some(valid_move) = valid_steps(&position, &settled, &walls) {
-        if dfs(&valid_move, &walls, settled, void_start_y_pos) {
+    while let Some(valid_move) = valid_steps(&position, &settled, &walls, floor_start_y_pos) {
+        if dfs(&valid_move, &walls, settled, floor_start_y_pos) {
             return true;
         }
     }
 
     settled.insert(*position);
 
+    // print(&settled, &walls, &position, floor_start_y_pos);
+
+    if position.1 == 0 && position.0 == 500 {
+        return true;
+    }
+
     return false;
 }
 
-pub fn part1(input_string: &str) -> i32 {
+pub fn part2(input_string: &str) -> i32 {
     let walls = parse_lines(input_string);
 
     // Lowest wall is start of void
-    let void_start_y_pos = walls
+    let floor_start_y_pos = walls
         .iter()
         .max_by(|(_, y1), (_, y2)| y1.cmp(y2))
         .unwrap()
-        .1;
+        .1
+        + 2;
 
-    println!("Void starts at y={}", void_start_y_pos);
+    println!("Floor starts at y={}", floor_start_y_pos);
 
     let start_position = (500, 0);
 
     let mut settled = HashSet::new();
 
-    dfs(&start_position, &walls, &mut settled, void_start_y_pos);
+    dfs(&start_position, &walls, &mut settled, floor_start_y_pos);
 
     settled.len() as i32
 }
 
-pub fn part2(input_string: &str) -> i32 {
-    0
-}
-
 fn main() {
     let input = include_str!("input.txt");
-
-    println!("Part 1: {}", part1(input));
 
     println!("Part 2: {}", part2(input));
 }
@@ -143,7 +148,7 @@ fn main() {
 mod tests {
     use std::collections::HashSet;
 
-    use crate::{parse_line, parse_lines, part1, part2, Position};
+    use crate::{parse_line, parse_lines, part2, Position};
 
     const TEST_INPUT: &str = "498,4 -> 498,6 -> 496,6
 503,4 -> 502,4 -> 502,9 -> 494,9";
@@ -179,11 +184,6 @@ mod tests {
             ),
             expected
         );
-    }
-
-    #[test]
-    fn test_part1() {
-        assert_eq!(part1(TEST_INPUT), 24);
     }
 
     #[test]
