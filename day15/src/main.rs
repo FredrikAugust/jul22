@@ -6,6 +6,7 @@ fn manhattan_distance((x1, y1): Position, (x2, y2): Position) -> i32 {
     (x1 - x2).abs() + (y1 - y2).abs()
 }
 
+#[derive(Debug)]
 pub struct Sensor {
     pub sensor_position: Position,
     pub closest_beacon_position: Position,
@@ -68,6 +69,24 @@ pub fn part2(input: &Vec<(Position, Position)>, max_xy: i32) -> i64 {
     let factor: i64 = 4_000_000;
 
     let sensors: Vec<Sensor> = input.clone().into_iter().map(Sensor::from_tuples).collect();
+
+    // -------------
+
+    for sensor1 in sensors.iter().clone() {
+        for sensor2 in sensors.iter().clone() {
+            if sensor1.distance_to(&sensor2.sensor_position)
+                == sensor1.sensor_radius() + sensor2.sensor_radius() + 2
+            {
+                println!("{:?}\n{:?}", sensor1, sensor2);
+            }
+        }
+    }
+
+    // med disse punktene kunne du tegnet radius med manhattan distance og så sett hvor det ene
+    // punktet alle klemte inne var og der er svaret
+    // det løser oppgaven på noen ms
+
+    // -------------
 
     let radii = sensors
         .iter()
@@ -134,7 +153,7 @@ fn main() {
         ((2228916, 1461096), (2491341, 1883354)),
     ];
 
-    println!("Part 1: {}", part1(&input, 2000000));
+    // println!("Part 1: {}", part1(&input, 2000000));
 
     println!("Part 2: {}", part2(&input, 4000000));
 }
