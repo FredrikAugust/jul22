@@ -70,7 +70,7 @@ impl Ord for Packet {
 fn list_to_packet(list: Pair<Rule>) -> Vec<Packet> {
     let mut packets: Vec<Packet> = vec![];
 
-    let mut pairs_list = list.into_inner();
+    let pairs_list = list.into_inner();
 
     for element in pairs_list {
         match element.as_rule() {
@@ -89,11 +89,9 @@ pub fn part2(input_string: &str) -> i32 {
         .next()
         .unwrap();
 
-    let mut count: i32 = 0;
-
     let mut packets: Vec<Packet> = Vec::new();
 
-    for (index, list) in parse.into_inner().enumerate() {
+    for list in parse.into_inner() {
         match list.as_rule() {
             Rule::list => {
                 // println!("{:?}", list);
